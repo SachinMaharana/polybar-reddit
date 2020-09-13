@@ -9,7 +9,7 @@ fn main() -> Result<()> {
     dotenv().ok();
 
     let saved_path = "/home/sachin/.config/polybar/current_post.txt";
-    let subreddit = "indiainvestments";
+    let subreddit = "politics+movies+television";
 
     let request_url = request_url_builder(subreddit);
 
@@ -20,8 +20,9 @@ fn main() -> Result<()> {
     loop {
         for post in &data {
             println!(
-           "{}\n",
-           post.title
+           "[{}]{}",
+           post.subreddit,
+           post.title,
        );
        fs::write(saved_path, &post.url)?;
        thread::sleep(Duration::from_millis(10000));
@@ -33,7 +34,7 @@ fn main() -> Result<()> {
 
 fn request_url_builder(subreddit: &str) -> String {
     format!(
-        "https://www.reddit.com/r/{}.json",
+        "https://www.reddit.com/r/{}.json?limit=75",
         subreddit
     )
 }
@@ -69,6 +70,7 @@ pub struct Child {
 #[derive(Debug, Deserialize)]
 pub struct Post {
     title: String,
-    url: String
+    url: String,
+    subreddit: String
 }
 
