@@ -1,3 +1,6 @@
+#[global_allocator]
+static GLOBAL: jemallocator::Jemalloc = jemallocator::Jemalloc;
+
 use anyhow::Result;
 use serde::Deserialize;
 use std::fs;
