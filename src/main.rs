@@ -2,38 +2,39 @@
 static GLOBAL: jemallocator::Jemalloc = jemallocator::Jemalloc;
 
 use anyhow::Result;
+use crossbeam_channel as channel;
+use itertools::{concat, Itertools};
 use serde::Deserialize;
 use std::fs;
 use std::thread;
 use std::time::Duration;
+use threadpool::ThreadPool;
 
 fn main() -> Result<()> {
     let saved_path = "/home/sachin/.config/polybar/current_post.txt";
-    
-    let politics = "politics";
-    let movies = "movies";
-    let tele = "television";
-    let indiainvestments = "indiainvestments";
+    let (tx, rx) = channel::unbounded();
+    let pool = ThreadPool::new(4);
 
-    let politics_url = request_url_builder(politics);
-    let movies_url = request_url_builder(movies);
-    let tele_url = request_url_builder(tele);
-    let indiainvestments_url = request_url_builder(indiainvestments);
+    let mut subreddits = Vec::new();
+    subreddits.push("politics");
+    subreddits.push("movies");
 
-    let  politics_response = make_request(&politics_url.as_str())?;
-    let  movies_response = make_request(&movies_url.as_str())?;
-    let  tele_response = make_request(&tele_url.as_str())?;
-    let  indiainvestments_response = make_request(&indiainvestments_url.as_str())?;
+    for sub in subreddits {
+        let url = request_url_builder(sub);
+        let tx = tx.clone();
 
-    let response: Vec<Child> = politics_response
-        .into_iter()
-        .chain(movies_response.into_iter())
-        .chain(indiainvestments_response.into_iter())
-        .chain(tele_response.into_iter())
-        .collect();
+        pool.execute(move || {
+            make_request(tx, url.as_str()).unwrap();
+        });
+    }
+
+    drop(tx);
+
+    let subreddit_collection = rx.into_iter().collect_vec();
+    let all_collection = concat(subreddit_collection);
 
     loop {
-        for post in &response {
+        for post in &all_collection {
             println!("[{}]{}", post.data.subreddit, post.data.title);
             fs::write(saved_path, &post.data.url)?;
             thread::sleep(Duration::from_millis(10000));
@@ -45,11 +46,11 @@ fn request_url_builder(subreddit: &str) -> String {
     format!("https://www.reddit.com/r/{}.json?limit=10", subreddit)
 }
 
-fn make_request(url: &str) -> Result<Vec<Child>> {
+fn make_request(tx: channel::Sender<Vec<ChildrenData>>, url: &str) -> Result<()> {
     let resp = ureq::get(&url).call().into_json_deserialize::<Response>()?;
-    return Ok(resp.data.children);
+    tx.send(resp.data.children)?;
+    Ok(())
 }
-
 
 #[derive(Debug, Deserialize)]
 pub struct Response {
@@ -58,11 +59,11 @@ pub struct Response {
 
 #[derive(Debug, Deserialize)]
 pub struct Children {
-    children: Vec<Child>,
+    children: Vec<ChildrenData>,
 }
 
 #[derive(Debug, Deserialize)]
-pub struct Child {
+pub struct ChildrenData {
     data: Post,
 }
 
