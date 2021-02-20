@@ -1,8 +1,6 @@
 name: rust-release
 
-on:
-  release:
-    types: [created]
+on: [push]
 
 jobs:
   release:
