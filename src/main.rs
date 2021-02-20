@@ -134,7 +134,7 @@ fn main() -> Result<()> {
     };
 
     if subreddits.is_empty() || subreddits.contains(&Cow::from("")) {
-        bail!("empty reddits not allowed");
+        bail!("Empty reddits not allowed");
     }
 
     bail_if_subredits_doesnt_exists(&subreddits)?;
