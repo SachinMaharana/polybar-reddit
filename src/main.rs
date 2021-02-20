@@ -1,6 +1,3 @@
-#[global_allocator]
-static GLOBAL: jemallocator::Jemalloc = jemallocator::Jemalloc;
-
 use anyhow::{bail, Result};
 use crossbeam_channel as channel;
 use itertools::{concat, Itertools};
@@ -11,7 +8,6 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use colored::*;
 use rustop::opts;
 
 use std::{str::FromStr, time::Duration};

@@ -11,7 +11,6 @@ anyhow = "1.0.32"
 dotenv = "0.15.0"
 serde = { version = "1.0.123", features = ["derive"] }
 ureq = { version = "*", features = ["json", "charset"] }
-jemallocator = "0.3.2"
 crossbeam-channel = "0.5.0"
 threadpool = "1.8.1"
 itertools = "0.10.0"
@@ -20,10 +19,3 @@ toml = "0.5.8"
 serde_json = "1.0.62"
 config = "0.10.1"
 rustop = "1.1.1"
-colored = "2.0.0"
-
-
-[profile.release]
-lto = "fat"
-codegen-units = 1
-panic = "abort"
