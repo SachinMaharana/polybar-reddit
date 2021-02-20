@@ -1,21 +1,22 @@
 #[global_allocator]
 static GLOBAL: jemallocator::Jemalloc = jemallocator::Jemalloc;
 
-use anyhow::{bail, format_err, Result};
+use anyhow::{bail, Result};
 use crossbeam_channel as channel;
 use itertools::{concat, Itertools};
 use serde::{Deserialize, Serialize};
-use std::{
-    borrow::{Borrow, Cow},
-    thread,
-};
+use std::{borrow::Cow, thread};
 use std::{
     env, fs,
     path::{Path, PathBuf},
 };
+
+use colored::*;
+use rustop::opts;
+
 use std::{str::FromStr, time::Duration};
 use threadpool::ThreadPool;
-// const DEFAULT_CONFIG_PATH = ""
+
 const DEFAULT_CONFIG_FILE_NAME: &str = "default.toml";
 const SAVED_PATH_FILE: &str = "current_post.txt";
 
@@ -24,7 +25,7 @@ pub fn get_polybar_reddit_home_dir() -> Result<PathBuf> {
         println!("Using $POLYBAR_REDDIT: {}", value);
         Path::new(&value).to_path_buf()
     } else {
-        println!("No $POLYBAR_REDDIT detected, using $HOME");
+        // println!("No $POLYBAR_REDDIT detected, using $HOME");
         dirs::home_dir()
             .expect("Could not find home directory")
             .join(".polybarreddit")
@@ -35,19 +36,20 @@ pub fn get_polybar_reddit_home_dir() -> Result<PathBuf> {
 fn get_global_config_path() -> Result<PathBuf> {
     let home_dir = get_polybar_reddit_home_dir()?;
     let global_config_file = home_dir.join("config").join(DEFAULT_CONFIG_FILE_NAME);
-    println!("Using global config file: {}", global_config_file.display());
+    // println!("Using global config file: {}", global_config_file.display());
     Ok(global_config_file)
 }
+
 fn get_saved_path() -> Result<PathBuf> {
     let home_dir = get_polybar_reddit_home_dir()?;
     let saved_file = home_dir.join("config").join(SAVED_PATH_FILE);
-    println!("Using global config file: {}", saved_file.display());
+    // println!("Using saved path: {}", saved_file.display());
     Ok(saved_file)
 }
 
 #[derive(Debug, Deserialize, Serialize)]
 struct Config<'a> {
-    subreddit: Vec<Cow<'a, str>>,
+    subreddits: Vec<Cow<'a, str>>,
 }
 
 impl<'a> FromStr for Config<'a> {
@@ -56,51 +58,67 @@ impl<'a> FromStr for Config<'a> {
         toml::from_str(s)
     }
 }
+
 impl<'a> Config<'a> {
+    fn new() -> Self {
+        Config {
+            subreddits: Vec::new(),
+        }
+    }
+
     fn to_file(&self, config_path: &Path) -> Result<()> {
         let toml = toml::to_string(self)?;
-        fs::create_dir_all(&config_path.parent().unwrap())?;
+        fs::create_dir_all(config_path.parent().unwrap())?;
         fs::write(&config_path, toml)?;
+        Ok(())
+    }
+    fn get_config<S: AsRef<Path>>(&self, config_file: S) -> Option<Config<'static>> {
+        match fs::read_to_string(config_file) {
+            Ok(contents) => match Config::from_str(&contents) {
+                Ok(config) => Some(config),
+                Err(_) => None,
+            },
+            Err(_) => None,
+        }
+    }
+
+    fn init<S: AsRef<Path>>(&self, config_file: S) -> Result<()> {
+        let mut subreddits = Vec::new();
+        subreddits.push("politics".into());
+        subreddits.push("movies".into());
+
+        let config = Config { subreddits };
+
+        config.to_file(config_file.as_ref())?;
         Ok(())
     }
 }
 
-fn init(config_file: &Path) -> Result<()> {
-    let mut subreddits = Vec::new();
-    subreddits.push(Cow::from("politics"));
-    subreddits.push(Cow::from("movies"));
-
-    let config = Config {
-        subreddit: subreddits,
-    };
-
-    config.to_file(&config_file)?;
-    Ok(())
-}
-
-fn get_config<S: AsRef<Path>>(config_file: S) -> Option<Config<'static>> {
-    match fs::read_to_string(config_file) {
-        Ok(contents) => match Config::from_str(&contents) {
-            Ok(config) => Some(config),
-            Err(_) => None,
-        },
-        Err(_) => None,
-    }
-}
-
 fn main() -> Result<()> {
-    let saved_path = "/home/sachin/.config/polybar/current_post.txt";
+    let saved_path = get_saved_path()?;
     let config_file = get_global_config_path()?;
-    println!("{:?}", config_file);
-    if let Some(c) = env::args().nth(1) {
-        if c == "init" {
-            init(&config_file).unwrap();
+    let config = Config::new();
+
+    let (args, _) = opts! {
+        synopsis "This is a simple test program.";
+        version env!("CARGO_PKG_VERSION");
+        opt init:bool=false, desc: "Initilaize this cli";
+    }
+    .parse_or_exit();
+
+    if args.init {
+        if config_file.exists() {
             println!(
-                "Successfully Created. Edit the file {} and run polybar-reddit",
-                &config_file.display()
+                "already initialized. find the config file at {}",
+                config_file.display()
             );
-            std::process::exit(0)
+            std::process::exit(0);
         }
+        config.init(&config_file)?;
+        println!(
+            "successfully initialized. find the config file at {}",
+            config_file.display()
+        );
     }
 
     if !config_file.exists() {
@@ -109,27 +127,17 @@ fn main() -> Result<()> {
         );
         std::process::exit(1)
     }
-    let subreddits = match get_config(config_file) {
-        Some(config) => config.subreddit,
+
+    let subreddits = match config.get_config(config_file) {
+        Some(config) => config.subreddits,
         None => bail!("Not valid Reddits Found"),
     };
 
-    if subreddits.is_empty() {
-        bail!("Add comma separated subreddits");
+    if subreddits.is_empty() || subreddits.contains(&Cow::from("")) {
+        bail!("empty reddits not allowed");
     }
 
-    if subreddits.contains(&Cow::from("")) {
-        bail!("No empty string allowed")
-    }
-
-    for s in &subreddits {
-        let url = request_url_builders(s);
-        let resp = ureq::get(&url).call();
-        if resp.status() != 200 {
-            bail!("{} subreddits not found", s);
-        }
-    }
-
+    bail_if_subredits_doesnt_exists(&subreddits)?;
     let (tx, rx) = channel::unbounded();
     let pool = ThreadPool::new(4);
 
@@ -146,16 +154,27 @@ fn main() -> Result<()> {
 
     let subreddit_collection = rx.into_iter().collect_vec();
     let all_collection = concat(subreddit_collection);
-
+    println!("Launching...");
     loop {
         for post in &all_collection {
+            let reddit_url = format!("https://reddit.com/{}", post.data.permalink);
             println!("[{}]{}", post.data.subreddit, post.data.title);
-            fs::write(saved_path, &post.data.url)?;
-            thread::sleep(Duration::from_millis(10000));
+            fs::write(&saved_path, reddit_url)?;
+            thread::sleep(Duration::from_millis(10_000));
         }
     }
 }
 
+fn bail_if_subredits_doesnt_exists(subreddits: &Vec<Cow<str>>) -> Result<()> {
+    for s in &subreddits.to_owned() {
+        let url = request_url_builders(s);
+        let resp = ureq::get(&url).timeout_connect(8_000).call();
+        if resp.status() != 200 {
+            bail!("{} subreddit not found", s);
+        }
+    }
+    Ok(())
+}
 fn request_url_builder(subreddit: Cow<str>) -> Cow<str> {
     let formatted_url = format!("https://www.reddit.com/r/{}.json?limit=10", subreddit);
     formatted_url.into()
@@ -169,15 +188,6 @@ fn make_request(tx: channel::Sender<Vec<ChildrenData>>, url: &str) -> Result<()>
     let resp = ureq::get(&url).call().into_json_deserialize::<Response>()?;
     tx.send(resp.data.children)?;
     Ok(())
-}
-
-fn exists(url: String) -> Result<()> {
-    let resp = ureq::get(&url).call();
-    if resp.status() != 200 {
-        bail!("Not");
-    } else {
-        Ok(())
-    }
 }
 
 #[derive(Debug, Deserialize)]
@@ -198,6 +208,6 @@ pub struct ChildrenData {
 #[derive(Debug, Deserialize)]
 pub struct Post {
     title: String,
-    url: String,
+    permalink: String,
     subreddit: String,
 }
