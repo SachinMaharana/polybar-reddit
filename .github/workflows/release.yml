@@ -26,10 +26,9 @@ jobs:
         run: sudo apt-get install libxcb-composite0-dev
       - name: Build project
         run: cargo build --release --locked
-      - name: Upload binary to release
-        uses: svenstaro/upload-release-action@v2
-        with:
-          repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: target/release/${{ matrix.artifact_name }}
-          asset_name: ${{ matrix.asset_name }}
-          tag: ${{ github.ref }}
+      - name: Rust Release binary
+        uses: Douile/rust-build.action@v0.1.26
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RUSTTARGET: ${{ matrix.target }}
+          EXTRA_FILES: "README.md LICENSE"
