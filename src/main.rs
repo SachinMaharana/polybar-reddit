@@ -11,7 +11,6 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use colored::*;
 use rustop::opts;
 
 use std::{str::FromStr, time::Duration};
@@ -31,6 +30,22 @@ pub fn get_polybar_reddit_home_dir() -> Result<PathBuf> {
             .join(".polybarreddit")
     };
     Ok(config_dir)
+}
+
+enum UrlType<'a> {
+    JsonUrl(Cow<'a, str>),
+    HealthUrl(Cow<'a, str>),
+}
+
+impl<'a> UrlType<'a> {
+    fn value(&self) -> String {
+        match &*self {
+            UrlType::JsonUrl(subreddit) => {
+                format!("https://www.reddit.com/r/{}.json?limit=10", subreddit)
+            }
+            UrlType::HealthUrl(subreddit) => format!("https://www.reddit.com/r/{}", subreddit),
+        }
+    }
 }
 
 fn get_global_config_path() -> Result<PathBuf> {
@@ -144,7 +159,7 @@ fn main() -> Result<()> {
     let pool = ThreadPool::new(4);
 
     for sub in subreddits {
-        let url = request_url_builder(sub);
+        let url = UrlType::JsonUrl(sub).value();
         let tx = tx.clone();
 
         pool.execute(move || {
@@ -169,21 +184,14 @@ fn main() -> Result<()> {
 
 fn bail_if_subredits_doesnt_exists(subreddits: &Vec<Cow<str>>) -> Result<()> {
     for s in &subreddits.to_owned() {
-        let url = request_url_builders(s);
+        let url = UrlType::HealthUrl(s.to_owned()).value();
+        println!("{}", url);
         let resp = ureq::get(&url).timeout_connect(8_000).call();
         if resp.status() != 200 {
             bail!("not valid response!check valid subreddit/connected to internet",)
         }
     }
     Ok(())
-}
-fn request_url_builder(subreddit: Cow<str>) -> Cow<str> {
-    let formatted_url = format!("https://www.reddit.com/r/{}.json?limit=10", subreddit);
-    formatted_url.into()
-}
-fn request_url_builders(subreddit: &str) -> Cow<str> {
-    let formatted_url = format!("https://www.reddit.com/r/{}", subreddit);
-    formatted_url.into()
 }
 
 fn make_request(tx: channel::Sender<Vec<ChildrenData>>, url: &str) -> Result<()> {
