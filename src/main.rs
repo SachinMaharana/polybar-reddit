@@ -100,7 +100,7 @@ fn main() -> Result<()> {
     let config = Config::new();
 
     let (args, _) = opts! {
-        synopsis "This is a simple test program.";
+        synopsis "polybar-reddit.";
         version env!("CARGO_PKG_VERSION");
         opt init:bool=false, desc: "Initilaize this cli";
     }
@@ -137,6 +137,8 @@ fn main() -> Result<()> {
         bail!("empty reddits not allowed");
     }
 
+    println!("Verifying...");
+
     bail_if_subredits_doesnt_exists(&subreddits)?;
     let (tx, rx) = channel::unbounded();
     let pool = ThreadPool::new(4);
@@ -170,7 +172,7 @@ fn bail_if_subredits_doesnt_exists(subreddits: &Vec<Cow<str>>) -> Result<()> {
         let url = request_url_builders(s);
         let resp = ureq::get(&url).timeout_connect(8_000).call();
         if resp.status() != 200 {
-            bail!("{} subreddit not found", s);
+            bail!("not valid response!check valid subreddit/connected to internet",)
         }
     }
     Ok(())
