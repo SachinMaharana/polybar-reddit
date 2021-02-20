@@ -78,9 +78,8 @@ fn init(config_file: &Path) -> Result<()> {
     Ok(())
 }
 
-fn get_config(config_file: &Path) -> Option<Config<'static>> {
-    let config_file = &config_file;
-    match fs::read_to_string(&config_file) {
+fn get_config<S: AsRef<Path>>(config_file: S) -> Option<Config<'static>> {
+    match fs::read_to_string(config_file) {
         Ok(contents) => match Config::from_str(&contents) {
             Ok(config) => Some(config),
             Err(_) => None,
@@ -110,7 +109,7 @@ fn main() -> Result<()> {
         );
         std::process::exit(1)
     }
-    let subreddits = match get_config(&config_file) {
+    let subreddits = match get_config(config_file) {
         Some(config) => config.subreddit,
         None => bail!("Not valid Reddits Found"),
     };
@@ -118,13 +117,6 @@ fn main() -> Result<()> {
     if subreddits.is_empty() {
         bail!("Add comma separated subreddits");
     }
-    // let subreddits = subreddits.iter().map(|s| {
-    //     if s.is_empty() {
-    //         bail!("Should not be emmpty")
-    //     } else {
-    //         return s;
-    //     }
-    // });
 
     if subreddits.contains(&Cow::from("")) {
         bail!("No empty string allowed")
@@ -146,7 +138,7 @@ fn main() -> Result<()> {
         let tx = tx.clone();
 
         pool.execute(move || {
-            make_request(tx, url.borrow()).unwrap();
+            make_request(tx, &url).unwrap();
         });
     }
 
@@ -166,11 +158,11 @@ fn main() -> Result<()> {
 
 fn request_url_builder(subreddit: Cow<str>) -> Cow<str> {
     let formatted_url = format!("https://www.reddit.com/r/{}.json?limit=10", subreddit);
-    Cow::from(formatted_url)
+    formatted_url.into()
 }
 fn request_url_builders(subreddit: &str) -> Cow<str> {
     let formatted_url = format!("https://www.reddit.com/r/{}", subreddit);
-    Cow::from(formatted_url)
+    formatted_url.into()
 }
 
 fn make_request(tx: channel::Sender<Vec<ChildrenData>>, url: &str) -> Result<()> {
