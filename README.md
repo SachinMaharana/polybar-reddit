@@ -1,14 +1,7 @@
-[![Contributors][contributors-shield]][contributors-url]
-[![Forks][forks-shield]][forks-url]
-[![Stargazers][stars-shield]][stars-url]
-[![Issues][issues-shield]][issues-url]
-[![MIT License][license-shield]][license-url]
-[![LinkedIn][linkedin-shield]][linkedin-url]
-
 <!-- PROJECT LOGO -->
 <br />
 <p align="center">
-  <a href="https://github.com/othneildrew/Best-README-Template">
+  <a href="https://github.com/sachinmaharana/polybar-reddit">
     <img src="assets/poly-icon.png" alt="Logo" width="200" height="200">
   </a>
 
@@ -17,14 +10,14 @@
   <p align="center">
     show your favorite subreddit posts in polybar
     <br />
-    <a href="https://github.com/othneildrew/Best-README-Template"><strong>Explore the docs »</strong></a>
+    <a href="https://github.com/sachinmaharana/polybar-reddit"><strong>Explore the docs »</strong></a>
     <br />
     <br />
-    <a href="https://github.com/othneildrew/Best-README-Template">View Demo</a>
+    <a href="https://github.com/sachinmaharana/polybar-reddit">View Demo</a>
     ·
-    <a href="https://github.com/othneildrew/Best-README-Template/issues">Report Bug</a>
+    <a href="https://github.com/sachinmaharana/polybar-reddit/issues">Report Bug</a>
     ·
-    <a href="https://github.com/othneildrew/Best-README-Template/issues">Request Feature</a>
+    <a href="https://github.com/sachinmaharana/polybar-reddit/issues">Request Feature</a>
   </p>
 </p>
 
@@ -124,7 +117,7 @@ _For more examples, please refer to the [Documentation](https://example.com)_
 
 ## Roadmap
 
-See the [open issues](https://github.com/othneildrew/Best-README-Template/issues) for a list of proposed features (and known issues).
+See the [open issues](https://github.com/sachinmaharana/polybar-reddit/issues) for a list of proposed features (and known issues).
 
 <!-- CONTRIBUTING -->
 
@@ -171,16 +164,16 @@ Project Link: [https://github.com/your_username/repo_name](https://github.com/yo
 <!-- MARKDOWN LINKS & IMAGES -->
 <!-- https://www.markdownguide.org/basic-syntax/#reference-style-links -->
 
-[contributors-shield]: https://img.shields.io/github/contributors/othneildrew/Best-README-Template.svg?style=for-the-badge
-[contributors-url]: https://github.com/othneildrew/Best-README-Template/graphs/contributors
-[forks-shield]: https://img.shields.io/github/forks/othneildrew/Best-README-Template.svg?style=for-the-badge
-[forks-url]: https://github.com/othneildrew/Best-README-Template/network/members
-[stars-shield]: https://img.shields.io/github/stars/othneildrew/Best-README-Template.svg?style=for-the-badge
-[stars-url]: https://github.com/othneildrew/Best-README-Template/stargazers
-[issues-shield]: https://img.shields.io/github/issues/othneildrew/Best-README-Template.svg?style=for-the-badge
-[issues-url]: https://github.com/othneildrew/Best-README-Template/issues
-[license-shield]: https://img.shields.io/github/license/othneildrew/Best-README-Template.svg?style=for-the-badge
-[license-url]: https://github.com/othneildrew/Best-README-Template/blob/master/LICENSE.txt
+[contributors-shield]: https://img.shields.io/github/contributors/sachinmaharana/polybar-reddit.svg?style=for-the-badge
+[contributors-url]: https://github.com/sachinmaharana/polybar-reddit/graphs/contributors
+[forks-shield]: https://img.shields.io/github/forks/sachinmaharana/polybar-reddit.svg?style=for-the-badge
+[forks-url]: https://github.com/sachinmaharana/polybar-reddit/network/members
+[stars-shield]: https://img.shields.io/github/stars/sachinmaharana/polybar-reddit.svg?style=for-the-badge
+[stars-url]: https://github.com/sachinmaharana/polybar-reddit/stargazers
+[issues-shield]: https://img.shields.io/github/issues/sachinmaharana/polybar-reddit.svg?style=for-the-badge
+[issues-url]: https://github.com/sachinmaharana/polybar-reddit/issues
+[license-shield]: https://img.shields.io/github/license/sachinmaharana/polybar-reddit.svg?style=for-the-badge
+[license-url]: https://github.com/sachinmaharana/polybar-reddit/blob/master/LICENSE.txt
 [linkedin-shield]: https://img.shields.io/badge/-LinkedIn-black.svg?style=for-the-badge&logo=linkedin&colorB=555
 [linkedin-url]: https://linkedin.com/in/othneildrew
 [product-screenshot]: images/screenshot.png
