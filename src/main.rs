@@ -157,7 +157,7 @@ fn main() -> Result<()> {
     println!("Launching...");
     loop {
         for post in &all_collection {
-            let reddit_url = format!("https://reddit.com/{}", post.data.permalink);
+            let reddit_url = format!("https://reddit.com{}", post.data.permalink);
             println!("[{}]{}", post.data.subreddit, post.data.title);
             fs::write(&saved_path, reddit_url)?;
             thread::sleep(Duration::from_millis(10_000));
