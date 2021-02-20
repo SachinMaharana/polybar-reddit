@@ -133,6 +133,8 @@ fn main() -> Result<()> {
         bail!("Empty reddits not allowed");
     }
 
+    println!("Verifying...");
+
     bail_if_subredits_doesnt_exists(&subreddits)?;
     let (tx, rx) = channel::unbounded();
     let pool = ThreadPool::new(4);
