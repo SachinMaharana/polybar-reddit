@@ -5,7 +5,10 @@ use anyhow::{bail, format_err, Result};
 use crossbeam_channel as channel;
 use itertools::{concat, Itertools};
 use serde::{Deserialize, Serialize};
-use std::thread;
+use std::{
+    borrow::{Borrow, Cow},
+    thread,
+};
 use std::{
     env, fs,
     path::{Path, PathBuf},
@@ -43,17 +46,17 @@ fn get_saved_path() -> Result<PathBuf> {
 }
 
 #[derive(Debug, Deserialize, Serialize)]
-struct Config {
-    subreddit: Vec<String>,
+struct Config<'a> {
+    subreddit: Vec<Cow<'a, str>>,
 }
 
-impl FromStr for Config {
+impl<'a> FromStr for Config<'a> {
     type Err = toml::de::Error;
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         toml::from_str(s)
     }
 }
-impl Config {
+impl<'a> Config<'a> {
     fn to_file(&self, config_path: &Path) -> Result<()> {
         let toml = toml::to_string(self)?;
         fs::create_dir_all(&config_path.parent().unwrap())?;
@@ -64,8 +67,8 @@ impl Config {
 
 fn init(config_file: &Path) -> Result<()> {
     let mut subreddits = Vec::new();
-    subreddits.push("politics".to_string());
-    subreddits.push("movies".to_string());
+    subreddits.push(Cow::from("politics"));
+    subreddits.push(Cow::from("movies"));
 
     let config = Config {
         subreddit: subreddits,
@@ -75,7 +78,8 @@ fn init(config_file: &Path) -> Result<()> {
     Ok(())
 }
 
-fn get_config(config_file: &Path) -> Option<Config> {
+fn get_config(config_file: &Path) -> Option<Config<'static>> {
+    let config_file = &config_file;
     match fs::read_to_string(&config_file) {
         Ok(contents) => match Config::from_str(&contents) {
             Ok(config) => Some(config),
@@ -122,12 +126,12 @@ fn main() -> Result<()> {
     //     }
     // });
 
-    if subreddits.contains(&"".to_string()) {
+    if subreddits.contains(&Cow::from("")) {
         bail!("No empty string allowed")
     }
 
     for s in &subreddits {
-        let url = request_url_builders(s.to_owned());
+        let url = request_url_builders(s);
         let resp = ureq::get(&url).call();
         if resp.status() != 200 {
             bail!("{} subreddits not found", s);
@@ -142,7 +146,7 @@ fn main() -> Result<()> {
         let tx = tx.clone();
 
         pool.execute(move || {
-            make_request(tx, url.as_str()).unwrap();
+            make_request(tx, url.borrow()).unwrap();
         });
     }
 
@@ -160,11 +164,13 @@ fn main() -> Result<()> {
     }
 }
 
-fn request_url_builder(subreddit: String) -> String {
-    format!("https://www.reddit.com/r/{}.json?limit=10", subreddit)
+fn request_url_builder(subreddit: Cow<str>) -> Cow<str> {
+    let formatted_url = format!("https://www.reddit.com/r/{}.json?limit=10", subreddit);
+    Cow::from(formatted_url)
 }
-fn request_url_builders(subreddit: String) -> String {
-    format!("https://www.reddit.com/r/{}", subreddit)
+fn request_url_builders(subreddit: &str) -> Cow<str> {
+    let formatted_url = format!("https://www.reddit.com/r/{}", subreddit);
+    Cow::from(formatted_url)
 }
 
 fn make_request(tx: channel::Sender<Vec<ChildrenData>>, url: &str) -> Result<()> {
