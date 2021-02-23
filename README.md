@@ -24,7 +24,7 @@
 Download the binary from releases page.
 
 ```bash
-wget https://github.com/SachinMaharana/polybar-reddit/releases/download/0.1.0/polybar-reddit
+wget https://github.com/SachinMaharana/polybar-reddit/releases/download/v0.1.0/polybar-reddit
 
 chmod +x polybar-reddit
 
