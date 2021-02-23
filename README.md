@@ -1,3 +1,23 @@
+<p align="center">
+  <a href="https://github.com/sachinmaharana/polybar-reddit">
+    <img src="assets/poly-icon.png" alt="Logo" width="200" height="200">
+  </a>
+
+  <h3 align="center">polybar-reddit</h3>
+
+  <p align="center">
+    show your favorite subreddit posts in polybar
+    <br />
+    <a href="https://github.com/sachinmaharana/polybar-reddit"><strong>Explore the docs »</strong></a>
+    <br />
+    <br />
+    <a href="https://github.com/sachinmaharana/polybar-reddit">View Demo</a>
+    ·
+    <a href="https://github.com/sachinmaharana/polybar-reddit/issues">Report Bug</a>
+    ·
+    <a href="https://github.com/sachinmaharana/polybar-reddit/issues">Request Feature</a>
+  </p>
+</p>
 ## Getting Started
 
 Download the binary from releases page.
