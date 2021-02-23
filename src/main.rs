@@ -1,4 +1,5 @@
 use anyhow::{bail, Result};
+use channel::Sender;
 use crossbeam_channel as channel;
 use itertools::{concat, Itertools};
 use serde::{Deserialize, Serialize};
@@ -8,6 +9,7 @@ use std::{
     path::{Path, PathBuf},
 };
 
+use log::info;
 use rustop::opts;
 
 use std::{str::FromStr, time::Duration};
@@ -15,19 +17,6 @@ use threadpool::ThreadPool;
 
 const DEFAULT_CONFIG_FILE_NAME: &str = "default.toml";
 const SAVED_PATH_FILE: &str = "current_post.txt";
-
-pub fn get_polybar_reddit_home_dir() -> Result<PathBuf> {
-    let config_dir = if let Ok(value) = env::var("POLYBAR_REDDIT") {
-        println!("Using $POLYBAR_REDDIT: {}", value);
-        Path::new(&value).to_path_buf()
-    } else {
-        // println!("No $POLYBAR_REDDIT detected, using $HOME");
-        dirs::home_dir()
-            .expect("Could not find home directory")
-            .join(".polybarreddit")
-    };
-    Ok(config_dir)
-}
 
 enum UrlType<'a> {
     JsonUrl(Cow<'a, str>),
@@ -45,17 +34,30 @@ impl<'a> UrlType<'a> {
     }
 }
 
+pub fn get_polybar_reddit_home_dir() -> Result<PathBuf> {
+    let config_dir = if let Ok(value) = env::var("POLYBAR_REDDIT") {
+        info!("Using $POLYBAR_REDDIT: {}", value);
+        Path::new(&value).to_path_buf()
+    } else {
+        info!("No $POLYBAR_REDDIT detected, using $HOME");
+        dirs::home_dir()
+            .expect("Could not find home directory")
+            .join(".polybarreddit")
+    };
+    Ok(config_dir)
+}
+
 fn get_global_config_path() -> Result<PathBuf> {
     let home_dir = get_polybar_reddit_home_dir()?;
     let global_config_file = home_dir.join("config").join(DEFAULT_CONFIG_FILE_NAME);
-    // println!("Using global config file: {}", global_config_file.display());
+    info!("Using global config file: {}", global_config_file.display());
     Ok(global_config_file)
 }
 
 fn get_saved_path() -> Result<PathBuf> {
     let home_dir = get_polybar_reddit_home_dir()?;
     let saved_file = home_dir.join("config").join(SAVED_PATH_FILE);
-    // println!("Using saved path: {}", saved_file.display());
+    info!("Using saved path: {}", saved_file.display());
     Ok(saved_file)
 }
 
@@ -91,44 +93,45 @@ impl<'a> Config<'a> {
 
     fn init<S: AsRef<Path>>(&self, config_file: S) -> Result<()> {
         let subreddits = vec!["politics".into(), "movies".into()];
-
-        let config = Self { subreddits };
-
+        let config = Config { subreddits };
         config.to_file(config_file.as_ref())?;
         Ok(())
     }
 }
 
 fn main() -> Result<()> {
+    env_logger::init();
+
     let saved_path = get_saved_path()?;
     let config_file = get_global_config_path()?;
     let config = Config::default();
 
     let (args, _) = opts! {
-        synopsis "polybar-reddit.";
+        synopsis "polybar-reddit. show top reddit posts in polybar.";
         version env!("CARGO_PKG_VERSION");
-        opt init:bool=false, desc: "Initilaize this cli";
+        opt init:bool=false, desc: "initilaize this cli";
     }
     .parse_or_exit();
 
     if args.init {
         if config_file.exists() {
-            println!(
+            eprintln!(
                 "already initialized. find the config file at {}",
                 config_file.display()
             );
             std::process::exit(0);
         }
         config.init(&config_file)?;
-        println!(
-            "successfully initialized. find the config file at {}",
+        eprintln!(
+            "successfully initialized. find the config file at {}. add your subreddits and run this program again with `polybar-reddit`",
             config_file.display()
         );
+        std::process::exit(1);
     }
 
     if !config_file.exists() {
-        println!(
-            "Config File Doesn't exist. Run polybar-reddit init to create one with default values"
+        eprintln!(
+            "config file doesn't exist. run `polybar-reddit --init` in you command line to create one with default values."
         );
         std::process::exit(1)
     }
@@ -142,12 +145,12 @@ fn main() -> Result<()> {
         bail!("empty reddits not allowed");
     }
 
-    println!("Verifying...");
+    eprintln!("Verifying...");
 
     bail_if_subredits_doesnt_exists(&subreddits)?;
 
     let (tx, rx) = channel::unbounded();
-    let pool = ThreadPool::new(4);
+    let pool = ThreadPool::new(2);
 
     for sub in subreddits {
         let url = UrlType::JsonUrl(sub).value();
@@ -160,13 +163,12 @@ fn main() -> Result<()> {
 
     drop(tx);
 
-    let subreddit_collection = rx.into_iter().collect_vec();
-    let all_collection = concat(subreddit_collection);
-    println!("Launching...");
+    let subreddit_collection = concat(rx.into_iter().collect_vec());
+    eprintln!("Launching...");
     loop {
-        for post in &all_collection {
-            let reddit_url = format!("https://reddit.com/{}", post.data.permalink);
-            println!("[{}]{}", post.data.subreddit, post.data.title);
+        for post in &subreddit_collection {
+            let reddit_url = format!("https://reddit.com{}", post.data.permalink);
+            eprintln!("[{}]{}", post.data.subreddit, post.data.title);
             fs::write(&saved_path, reddit_url)?;
             thread::sleep(Duration::from_millis(10_000));
         }
@@ -184,7 +186,7 @@ fn bail_if_subredits_doesnt_exists(subreddits: &[Cow<str>]) -> Result<()> {
     Ok(())
 }
 
-fn make_request(tx: channel::Sender<Vec<ChildrenData>>, url: &str) -> Result<()> {
+fn make_request(tx: Sender<Vec<ChildrenData>>, url: &str) -> Result<()> {
     let resp = ureq::get(&url)
         .timeout_connect(8_000)
         .call()
