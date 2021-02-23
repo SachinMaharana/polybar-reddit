@@ -29,6 +29,22 @@ pub fn get_polybar_reddit_home_dir() -> Result<PathBuf> {
     Ok(config_dir)
 }
 
+enum UrlType<'a> {
+    JsonUrl(Cow<'a, str>),
+    HealthUrl(Cow<'a, str>),
+}
+
+impl<'a> UrlType<'a> {
+    fn value(&self) -> String {
+        match &*self {
+            UrlType::JsonUrl(subreddit) => {
+                format!("https://www.reddit.com/r/{}.json?limit=10", subreddit)
+            }
+            UrlType::HealthUrl(subreddit) => format!("https://www.reddit.com/r/{}", subreddit),
+        }
+    }
+}
+
 fn get_global_config_path() -> Result<PathBuf> {
     let home_dir = get_polybar_reddit_home_dir()?;
     let global_config_file = home_dir.join("config").join(DEFAULT_CONFIG_FILE_NAME);
@@ -43,7 +59,7 @@ fn get_saved_path() -> Result<PathBuf> {
     Ok(saved_file)
 }
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize, Default)]
 struct Config<'a> {
     subreddits: Vec<Cow<'a, str>>,
 }
@@ -56,18 +72,13 @@ impl<'a> FromStr for Config<'a> {
 }
 
 impl<'a> Config<'a> {
-    fn new() -> Self {
-        Config {
-            subreddits: Vec::new(),
-        }
-    }
-
     fn to_file(&self, config_path: &Path) -> Result<()> {
         let toml = toml::to_string(self)?;
         fs::create_dir_all(config_path.parent().unwrap())?;
         fs::write(&config_path, toml)?;
         Ok(())
     }
+
     fn get_config<S: AsRef<Path>>(&self, config_file: S) -> Option<Config<'static>> {
         match fs::read_to_string(config_file) {
             Ok(contents) => match Config::from_str(&contents) {
@@ -93,10 +104,10 @@ impl<'a> Config<'a> {
 fn main() -> Result<()> {
     let saved_path = get_saved_path()?;
     let config_file = get_global_config_path()?;
-    let config = Config::new();
+    let config = Config::default();
 
     let (args, _) = opts! {
-        synopsis "This is a simple test program.";
+        synopsis "polybar-reddit.";
         version env!("CARGO_PKG_VERSION");
         opt init:bool=false, desc: "Initilaize this cli";
     }
@@ -136,11 +147,12 @@ fn main() -> Result<()> {
     println!("Verifying...");
 
     bail_if_subredits_doesnt_exists(&subreddits)?;
+
     let (tx, rx) = channel::unbounded();
     let pool = ThreadPool::new(4);
 
     for sub in subreddits {
-        let url = request_url_builder(sub);
+        let url = UrlType::JsonUrl(sub).value();
         let tx = tx.clone();
 
         pool.execute(move || {
@@ -165,25 +177,20 @@ fn main() -> Result<()> {
 
 fn bail_if_subredits_doesnt_exists(subreddits: &Vec<Cow<str>>) -> Result<()> {
     for s in &subreddits.to_owned() {
-        let url = request_url_builders(s);
-        let resp = ureq::get(&url).timeout_connect(8_000).call();
+        let url = UrlType::HealthUrl(s.to_owned()).value();
+        let resp = ureq::get(&url).timeout_connect(10_000).call();
         if resp.status() != 200 {
-            bail!("{} subreddit not found", s);
+            bail!("not valid response!check valid subreddit/connected to internet",)
         }
     }
     Ok(())
 }
-fn request_url_builder(subreddit: Cow<str>) -> Cow<str> {
-    let formatted_url = format!("https://www.reddit.com/r/{}.json?limit=10", subreddit);
-    formatted_url.into()
-}
-fn request_url_builders(subreddit: &str) -> Cow<str> {
-    let formatted_url = format!("https://www.reddit.com/r/{}", subreddit);
-    formatted_url.into()
-}
 
 fn make_request(tx: channel::Sender<Vec<ChildrenData>>, url: &str) -> Result<()> {
-    let resp = ureq::get(&url).call().into_json_deserialize::<Response>()?;
+    let resp = ureq::get(&url)
+        .timeout_connect(8_000)
+        .call()
+        .into_json_deserialize::<Response>()?;
     tx.send(resp.data.children)?;
     Ok(())
 }
