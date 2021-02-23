@@ -90,11 +90,9 @@ impl<'a> Config<'a> {
     }
 
     fn init<S: AsRef<Path>>(&self, config_file: S) -> Result<()> {
-        let mut subreddits = Vec::new();
-        subreddits.push("politics".into());
-        subreddits.push("movies".into());
+        let subreddits = vec!["politics".into(), "movies".into()];
 
-        let config = Config { subreddits };
+        let config = Self { subreddits };
 
         config.to_file(config_file.as_ref())?;
         Ok(())
@@ -141,7 +139,7 @@ fn main() -> Result<()> {
     };
 
     if subreddits.is_empty() || subreddits.contains(&Cow::from("")) {
-        bail!("Empty reddits not allowed");
+        bail!("empty reddits not allowed");
     }
 
     println!("Verifying...");
@@ -167,7 +165,7 @@ fn main() -> Result<()> {
     println!("Launching...");
     loop {
         for post in &all_collection {
-            let reddit_url = format!("https://reddit.com{}", post.data.permalink);
+            let reddit_url = format!("https://reddit.com/{}", post.data.permalink);
             println!("[{}]{}", post.data.subreddit, post.data.title);
             fs::write(&saved_path, reddit_url)?;
             thread::sleep(Duration::from_millis(10_000));
@@ -175,7 +173,7 @@ fn main() -> Result<()> {
     }
 }
 
-fn bail_if_subredits_doesnt_exists(subreddits: &Vec<Cow<str>>) -> Result<()> {
+fn bail_if_subredits_doesnt_exists(subreddits: &[Cow<str>]) -> Result<()> {
     for s in &subreddits.to_owned() {
         let url = UrlType::HealthUrl(s.to_owned()).value();
         let resp = ureq::get(&url).timeout_connect(10_000).call();
