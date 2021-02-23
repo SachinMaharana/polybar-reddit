@@ -18,6 +18,7 @@
     <a href="https://github.com/sachinmaharana/polybar-reddit/issues">Request Feature</a>
   </p>
 </p>
+
 ## Getting Started
 
 Download the binary from releases page.
