@@ -16,19 +16,19 @@ polybar-reddit -h
 
 polybar-reddit --init
 
-# Note the config file(both are required for polybar config):
+# Note the config file location after running the above command(both are required for polybar config):
 ls /home/user/.polybarreddit/config
 
 /home/user/.polybarreddit/config/default.toml # edit this to add more subreddits of your choice
 /home/user/.polybarreddit/config/current_post.txt
 ```
 
-## Usage
+## Polybar Config
 
 ```bash
 [module/reddit]
 type = custom/script
-exec = /home/user/blackhole/polybar-reddit
+exec = /usr/local/bin/polybar-reddit
 ; interval = 30
 content-foreground = ${color.deep-orange}
 click-left = < /home/user/.polybarreddit/config/current_post.txt xargs -I % xdg-open %

@@ -123,8 +123,15 @@ fn main() -> Result<()> {
         }
         config.init(&config_file)?;
         eprintln!(
-            "successfully initialized. find the config file at {}. add your subreddits and run this program again with `polybar-reddit`",
-            config_file.display()
+            "successfully initialized. add your subreddits in the config file at {}.
+            polybar config snippet:
+            ...
+            exec = // polybar-reddit binary location
+            click-left = < {}  xargs -I % xdg-open %
+            ...
+            ",
+            config_file.display(),
+            saved_path.display()
         );
         std::process::exit(1);
     }
