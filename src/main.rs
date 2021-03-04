@@ -130,7 +130,7 @@ fn main() -> Result<()> {
         // }
         config.init(&config_file)?;
         eprintln!(
-            "successfully initialized. add your subreddits and interval time(in ms) in the config file at {}
+            "successfully initialized. add your subreddits and interval time(in ms) in the config file at: \n{}\n
             polybar config snippet(see docs for full snippet.):
             ...
             exec = // polybar-reddit binary location
@@ -164,7 +164,7 @@ fn main() -> Result<()> {
     bail_if_subredits_doesnt_exists(&subreddits)?;
 
     let (tx, rx) = channel::unbounded();
-    let pool = ThreadPool::new(2);
+    let pool = ThreadPool::new(4);
 
     for sub in subreddits {
         let url = UrlType::JsonUrl(sub).value();

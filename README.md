@@ -1,4 +1,3 @@
-
 <p align="center">
   <a href="https://github.com/sachinmaharana/polybar-reddit">
     <img src="assets/poly-icon.png" alt="Logo" width="200" height="200">
@@ -21,8 +20,6 @@
 </p>
 
 ![Demo](https://user-images.githubusercontent.com/8871040/109928680-b4f44c00-7ceb-11eb-9c84-f4560fccec1d.mp4)
-
-
 
 ## Getting Started
 
@@ -94,3 +91,9 @@ Project Link: [https://github.com/sachinmaharana/polybar-reddit](https://github.
 ```
 
 ```
+
+Hi. I have created this module to show the posts of subreddits in polybar(can also open the link in browser). Would love your feedback on this.
+
+Demo: https://user-images.githubusercontent.com/8871040/109928680-b4f44c00-7ceb-11eb-9c84-f4560fccec1d.mp4
+
+Github & Instructions: https://github.com/SachinMaharana/polybar-reddit
