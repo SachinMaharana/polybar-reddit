@@ -12,7 +12,7 @@
     <a href="https://github.com/sachinmaharana/polybar-reddit"><strong>Explore the docs »</strong></a>
     <br />
     <br />
-    <a href="https://github.com/sachinmaharana/polybar-reddit">View Demo</a>
+    <a href="https://user-images.githubusercontent.com/8871040/109928680-b4f44c00-7ceb-11eb-9c84-f4560fccec1d.mp4">View Demo</a>
     ·
     <a href="https://github.com/sachinmaharana/polybar-reddit/issues">Report Bug</a>
     ·
