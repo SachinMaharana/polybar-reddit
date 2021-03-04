@@ -1,3 +1,4 @@
+
 <p align="center">
   <a href="https://github.com/sachinmaharana/polybar-reddit">
     <img src="assets/poly-icon.png" alt="Logo" width="200" height="200">
@@ -18,6 +19,11 @@
     <a href="https://github.com/sachinmaharana/polybar-reddit/issues">Request Feature</a>
   </p>
 </p>
+
+
+https://user-images.githubusercontent.com/8871040/109928680-b4f44c00-7ceb-11eb-9c84-f4560fccec1d.mp4
+
+
 
 ## Getting Started
 
