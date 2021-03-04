@@ -52,7 +52,7 @@ type = custom/script
 exec = /usr/local/bin/polybar-reddit
 ; interval = 30
 content-foreground = ${color.deep-orange}
-;replace the config location here.
+;replace the config location of current_post here.
 click-left = < /home/<user>/.polybarreddit/config/current_post.txt xargs -I % xdg-open %
 tail = true
 label-maxlen = 100
