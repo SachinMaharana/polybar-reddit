@@ -25,7 +25,6 @@ Download the binary from releases page.
 
 ```bash
 wget https://github.com/SachinMaharana/polybar-reddit/releases/download/v0.1.0/polybar-reddit
-
 chmod +x polybar-reddit
 
 cp polybar-reddit /usr/local/bin
@@ -41,7 +40,7 @@ polybar-reddit --init
 ls /home/user/.polybarreddit/config
 
 /home/user/.polybarreddit/config/default.toml # edit this to add more subreddits of your choice
-/home/user/.polybarreddit/config/current_post.txt
+/home/user/.polybarreddit/config/current_post.txt # do not edit this.
 ```
 
 ## Polybar Config

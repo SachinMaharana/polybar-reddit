@@ -1,3 +1,5 @@
+#[macro_use]
+extern crate smart_default;
 use anyhow::{bail, Result};
 use channel::Sender;
 use crossbeam_channel as channel;
@@ -61,9 +63,11 @@ fn get_saved_path() -> Result<PathBuf> {
     Ok(saved_file)
 }
 
-#[derive(Debug, Deserialize, Serialize, Default)]
+#[derive(Debug, Deserialize, Serialize, SmartDefault)]
 struct Config<'a> {
     subreddits: Vec<Cow<'a, str>>,
+    #[default = 10_000]
+    interval_time: u64,
 }
 
 impl<'a> FromStr for Config<'a> {
@@ -93,7 +97,10 @@ impl<'a> Config<'a> {
 
     fn init<S: AsRef<Path>>(&self, config_file: S) -> Result<()> {
         let subreddits = vec!["politics".into(), "movies".into()];
-        let config = Config { subreddits };
+        let config = Config {
+            subreddits,
+            ..Default::default()
+        };
         config.to_file(config_file.as_ref())?;
         Ok(())
     }
@@ -109,22 +116,22 @@ fn main() -> Result<()> {
     let (args, _) = opts! {
         synopsis "polybar-reddit. show top reddit posts in polybar.";
         version env!("CARGO_PKG_VERSION");
-        opt init:bool=false, desc: "initilaize this cli";
+        param init:Option<String>, desc: "initilaize this cli";
     }
     .parse_or_exit();
 
-    if args.init {
-        if config_file.exists() {
-            eprintln!(
-                "already initialized. find the config file at {}",
-                config_file.display()
-            );
-            std::process::exit(0);
-        }
+    if args.init.is_some() {
+        // if config_file.exists() {
+        //     eprintln!(
+        //         "already initialized. find the config file at {}",
+        //         config_file.display()
+        //     );
+        //     std::process::exit(0);
+        // }
         config.init(&config_file)?;
         eprintln!(
-            "successfully initialized. add your subreddits in the config file at {}.
-            polybar config snippet:
+            "successfully initialized. add your subreddits and interval time(in ms) in the config file at {}
+            polybar config snippet(see docs for full snippet.):
             ...
             exec = // polybar-reddit binary location
             click-left = < {}  xargs -I % xdg-open %
@@ -138,14 +145,14 @@ fn main() -> Result<()> {
 
     if !config_file.exists() {
         eprintln!(
-            "config file doesn't exist. run `polybar-reddit --init` in you command line to create one with default values."
+            "config file doesn't exist. run `polybar-reddit init` in you command line to create one with default values."
         );
         std::process::exit(1)
     }
 
-    let subreddits = match config.get_config(config_file) {
-        Some(config) => config.subreddits,
-        None => bail!("Not valid Reddits Found"),
+    let (subreddits, interval_time) = match config.get_config(config_file) {
+        Some(config) => (config.subreddits, config.interval_time),
+        None => bail!("valid config not found. make sure to add subreddits and interval_time(in ms).Alternatively, run `polybar-reddit init` to create a default one."),
     };
 
     if subreddits.is_empty() || subreddits.contains(&Cow::from("")) {
@@ -177,7 +184,7 @@ fn main() -> Result<()> {
             let reddit_url = format!("https://reddit.com{}", post.data.permalink);
             eprintln!("[{}]{}", post.data.subreddit, post.data.title);
             fs::write(&saved_path, reddit_url)?;
-            thread::sleep(Duration::from_millis(10_000));
+            thread::sleep(Duration::from_millis(interval_time));
         }
     }
 }

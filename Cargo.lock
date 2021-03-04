@@ -460,7 +460,7 @@ checksum = "d4fd5641d01c8f18a23da7b6fe29298ff4b55afcccdf78973b24cf3175fee32e"
 
 [[package]]
 name = "polybar-reddit"
-version = "0.1.0"
+version = "0.3.0"
 dependencies = [
  "anyhow",
  "config",
@@ -473,6 +473,7 @@ dependencies = [
  "rustop",
  "serde 1.0.123",
  "serde_json",
+ "smart-default",
  "threadpool",
  "toml",
  "ureq",
@@ -702,6 +703,17 @@ name = "sha1"
 version = "0.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2579985fda508104f7587689507983eadd6a6e84dd35d6d115361f530916fa0d"
+
+[[package]]
+name = "smart-default"
+version = "0.6.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "133659a15339456eeeb07572eb02a91c91e9815e9cbc89566944d2c8d3efdbf6"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
+]
 
 [[package]]
 name = "spin"
