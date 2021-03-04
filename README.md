@@ -24,7 +24,7 @@
 Download the binary from releases page.
 
 ```bash
-wget https://github.com/SachinMaharana/polybar-reddit/releases/download/v0.1.0/polybar-reddit
+wget https://github.com/SachinMaharana/polybar-reddit/releases/download/v0.3.0/polybar-reddit
 chmod +x polybar-reddit
 
 cp polybar-reddit /usr/local/bin
@@ -34,24 +34,26 @@ polybar-reddit -h
 # Initialize for the first time
 # ------------------------------
 
-polybar-reddit --init
+polybar-reddit init
 
 # Note the config file location after running the above command(both are required for polybar config):
-ls /home/user/.polybarreddit/config
+ls /home/<user>/.polybarreddit/config
 
-/home/user/.polybarreddit/config/default.toml # edit this to add more subreddits of your choice
-/home/user/.polybarreddit/config/current_post.txt # do not edit this.
+/home/<user>/.polybarreddit/config/default.toml # edit this to add more subreddits of your choice
+/home/<user>/.polybarreddit/config/current_post.txt # do not edit this.
 ```
 
-## Polybar Config
+## Example Polybar Config
 
 ```bash
 [module/reddit]
 type = custom/script
+; change the location  below to the binary location of your system
 exec = /usr/local/bin/polybar-reddit
 ; interval = 30
 content-foreground = ${color.deep-orange}
-click-left = < /home/user/.polybarreddit/config/current_post.txt xargs -I % xdg-open %
+;replace the config location here.
+click-left = < /home/<user>/.polybarreddit/config/current_post.txt xargs -I % xdg-open %
 tail = true
 label-maxlen = 100
 ```
